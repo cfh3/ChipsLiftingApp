@@ -1,26 +1,29 @@
 import SwiftUI
 import SwiftData
 
-/// Modal sheet for adding an exercise to the active workout.
+/// Modal sheet for selecting an exercise to add to the active workout.
 ///
-/// Two-step flow:
-/// 1. Search and select an exercise from the grouped list.
-/// 2. Configure the number of sets, weight, and reps on `ExerciseSetupView`.
-///
-/// The `onSelect` callback is invoked with all four values when the user
-/// confirms, then the entire sheet is dismissed.
+/// Tapping an exercise presents `ExerciseSetupView` as a child sheet where
+/// the user configures sets, weight, and reps. On confirmation, `onSelect`
+/// is called and both sheets are dismissed together.
 struct ExercisePickerView: View {
     /// Names of exercises already in the workout — hidden from the list
     /// so the user can't add the same exercise twice.
     let existingNames: Set<String>
 
-    /// Called with the chosen exercise and its configuration (sets, weight, reps)
-    /// just before the sheet dismisses.
+    /// Called with the chosen exercise and its configuration when confirmed.
     let onSelect: (Exercise, _ sets: Int, _ weight: Double, _ reps: Int) -> Void
 
+    /// Dismisses the picker sheet (the outer sheet owned by ActiveWorkoutView).
+    /// Captured here so it can be called from within the setup sheet closure.
     @Environment(\.dismiss) private var dismiss
+
     @Query(sort: \Exercise.name) private var exercises: [Exercise]
     @State private var searchText = ""
+
+    /// Set when the user taps an exercise. Drives the setup sheet presentation.
+    /// Kept inside the picker so it is unaffected by re-renders in ActiveWorkoutView.
+    @State private var selectedExercise: Exercise?
 
     private var filtered: [Exercise] {
         exercises.filter { exercise in
@@ -43,17 +46,17 @@ struct ExercisePickerView: View {
                 ForEach(grouped, id: \.0) { category, exercises in
                     Section(category.rawValue) {
                         ForEach(exercises) { exercise in
-                            // NavigationLink manages its own push state internally,
-                            // avoiding the re-render/reset issues of navigationDestination(item:).
-                            // `dismiss` is captured from this scope so calling it inside
-                            // onConfirm closes the entire picker sheet.
-                            NavigationLink {
-                                ExerciseSetupView(exercise: exercise) { sets, weight, reps in
-                                    onSelect(exercise, sets, weight, reps)
-                                    dismiss()
-                                }
+                            Button {
+                                selectedExercise = exercise
                             } label: {
-                                Text(exercise.name)
+                                HStack {
+                                    Text(exercise.name)
+                                        .foregroundStyle(.primary)
+                                    Spacer()
+                                    Image(systemName: "chevron.right")
+                                        .font(.caption)
+                                        .foregroundStyle(.tertiary)
+                                }
                             }
                         }
                     }
@@ -68,18 +71,28 @@ struct ExercisePickerView: View {
                 }
             }
         }
+        // ExerciseSetupView is presented as a child sheet rather than a
+        // navigation push. Child sheets are fully isolated from parent view
+        // re-renders, avoiding premature dismissal when ActiveWorkoutView
+        // updates (e.g. the elapsed timer). Dismissing the picker sheet
+        // also dismisses this child sheet automatically.
+        .sheet(item: $selectedExercise) { exercise in
+            ExerciseSetupView(exercise: exercise) { sets, weight, reps in
+                onSelect(exercise, sets, weight, reps)
+                dismiss() // closes picker + this child sheet together
+            }
+        }
     }
 }
 
-/// Second step of the add-exercise flow: configure sets, weight, and reps.
+/// Configures the sets, weight, and reps for an exercise before adding it.
 ///
-/// Presents a simple form with a stepper for set count and text fields for
-/// weight and reps. The "Add" button stays disabled until both numeric fields
-/// contain valid, positive values.
+/// Presented as a child sheet from `ExercisePickerView`. The "Add" button
+/// is disabled until both weight and reps contain valid positive numbers.
 struct ExerciseSetupView: View {
     let exercise: Exercise
 
-    /// Called with the confirmed (sets, weight, reps) when the user taps "Add".
+    /// Called with confirmed (sets, weight, reps) when the user taps "Add".
     let onConfirm: (_ sets: Int, _ weight: Double, _ reps: Int) -> Void
 
     /// Defaults to 3 sets — a common starting point for most exercises.
@@ -92,49 +105,50 @@ struct ExerciseSetupView: View {
     }
 
     var body: some View {
-        Form {
-            Section {
-                // Stepper bounded to a practical range (1–20 sets)
-                Stepper("\(sets) \(sets == 1 ? "set" : "sets")", value: $sets, in: 1...20)
-            } header: {
-                Text("Sets")
-            }
+        NavigationStack {
+            Form {
+                Section {
+                    Stepper("\(sets) \(sets == 1 ? "set" : "sets")", value: $sets, in: 1...20)
+                } header: {
+                    Text("Sets")
+                }
 
-            Section {
-                HStack {
-                    Text("Weight")
-                    Spacer()
-                    TextField("0", text: $weight)
-                        .keyboardType(.decimalPad)
-                        .multilineTextAlignment(.trailing)
-                        .frame(width: 80)
-                    Text("lbs")
-                        .foregroundStyle(.secondary)
+                Section {
+                    HStack {
+                        Text("Weight")
+                        Spacer()
+                        TextField("0", text: $weight)
+                            .keyboardType(.decimalPad)
+                            .multilineTextAlignment(.trailing)
+                            .frame(width: 80)
+                        Text("lbs")
+                            .foregroundStyle(.secondary)
+                    }
+                    HStack {
+                        Text("Reps")
+                        Spacer()
+                        TextField("0", text: $reps)
+                            .keyboardType(.numberPad)
+                            .multilineTextAlignment(.trailing)
+                            .frame(width: 80)
+                        Text("per set")
+                            .foregroundStyle(.secondary)
+                    }
+                } header: {
+                    Text("Weight & Reps")
                 }
-                HStack {
-                    Text("Reps")
-                    Spacer()
-                    TextField("0", text: $reps)
-                        .keyboardType(.numberPad)
-                        .multilineTextAlignment(.trailing)
-                        .frame(width: 80)
-                    Text("per set")
-                        .foregroundStyle(.secondary)
-                }
-            } header: {
-                Text("Weight & Reps")
             }
-        }
-        .navigationTitle(exercise.name)
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .confirmationAction) {
-                Button("Add") {
-                    guard let w = Double(weight), let r = Int(reps), r > 0 else { return }
-                    onConfirm(sets, w, r)
+            .navigationTitle(exercise.name)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Add") {
+                        guard let w = Double(weight), let r = Int(reps), r > 0 else { return }
+                        onConfirm(sets, w, r)
+                    }
+                    .fontWeight(.semibold)
+                    .disabled(!canConfirm)
                 }
-                .fontWeight(.semibold)
-                .disabled(!canConfirm)
             }
         }
     }
