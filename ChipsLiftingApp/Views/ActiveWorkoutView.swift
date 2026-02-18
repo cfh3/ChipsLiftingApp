@@ -58,9 +58,6 @@ struct ActiveWorkoutView: View {
     @State private var showingPicker = false
     @State private var showingDiscardAlert = false
 
-    /// Seconds elapsed since the workout started, incremented by the async timer task.
-    @State private var elapsed: TimeInterval = 0
-
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -69,7 +66,7 @@ struct ActiveWorkoutView: View {
                     ForEach($entries) { $entry in
                         ExerciseBlockView(
                             entry: $entry,
-                            completedSets: setsFor(entry.name),
+                            session: session,
                             onAddSet: { addSet(for: entry.name) },
                             onDeleteSet: deleteSet
                         )
@@ -99,24 +96,23 @@ struct ActiveWorkoutView: View {
                     Button("Discard") { showingDiscardAlert = true }
                         .foregroundStyle(.red)
                 }
-                // Center: live elapsed timer
+                // Center: live elapsed timer.
+                // Owned by ElapsedTimerView so its per-second state changes
+                // don't re-render ActiveWorkoutView (which would reset sheet state).
                 ToolbarItem(placement: .principal) {
-                    Text(formatTime(elapsed))
-                        .font(.subheadline.monospacedDigit())
-                        .foregroundStyle(.secondary)
+                    ElapsedTimerView()
                 }
-                // Right: finish — disabled until at least one set is logged
+                // Right: finish — scoped to FinishButtonView so reading
+                // session.sets.isEmpty doesn't re-render ActiveWorkoutView.
                 ToolbarItem(placement: .primaryAction) {
-                    Button("Finish") { finishWorkout() }
-                        .fontWeight(.semibold)
-                        .disabled(session.sets.isEmpty)
+                    FinishButtonView(session: session, action: finishWorkout)
                 }
             }
         }
         .sheet(isPresented: $showingPicker) {
             // Pass existing exercise names so the picker hides already-added exercises
-            ExercisePickerView(existingNames: Set(entries.map(\.name))) { exercise, sets, weight, reps in
-                addExercise(exercise, sets: sets, weight: weight, reps: reps)
+            ExercisePickerView(existingNames: Set(entries.map(\.name))) { exercise, weight, reps in
+                addExercise(exercise, weight: weight, reps: reps)
             }
         }
         .alert("Discard Workout?", isPresented: $showingDiscardAlert) {
@@ -125,50 +121,26 @@ struct ActiveWorkoutView: View {
         } message: {
             Text("All logged sets will be deleted.")
         }
-        // Async timer: increments `elapsed` every second until the task is
-        // cancelled (which happens automatically when the view disappears).
-        .task {
-            while !Task.isCancelled {
-                do {
-                    try await Task.sleep(for: .seconds(1))
-                    elapsed += 1
-                } catch {
-                    break  // Task.sleep throws CancellationError when cancelled
-                }
-            }
-        }
-    }
-
-    // MARK: - Helpers
-
-    /// Returns the completed sets for `name`, sorted by set number.
-    /// Reads directly from `session.sets` which is kept live by SwiftData.
-    private func setsFor(_ name: String) -> [WorkoutSet] {
-        session.sets.filter { $0.exerciseName == name }.sorted { $0.setNumber < $1.setNumber }
     }
 
     // MARK: - Actions
 
-    /// Adds an exercise to the workout and immediately logs `sets` identical sets
-    /// with the given `weight` and `reps`. The guard prevents duplicates.
+    /// Adds an exercise block to the workout with weight and reps pre-filled.
     ///
-    /// An `ExerciseEntry` is still appended so the block appears on screen and
-    /// the user can log additional sets manually afterward.
-    private func addExercise(_ exercise: Exercise, sets: Int, weight: Double, reps: Int) {
+    /// No sets are created yet — the user taps the checkmark to log each set
+    /// individually. Pre-filling saves retyping the same values for every set.
+    /// The guard prevents adding the same exercise twice.
+    private func addExercise(_ exercise: Exercise, weight: Double, reps: Int) {
         guard !entries.contains(where: { $0.name == exercise.name }) else { return }
-        entries.append(ExerciseEntry(name: exercise.name, category: exercise.category))
-
-        for i in 1...sets {
-            let set = WorkoutSet(
-                exerciseName: exercise.name,
-                exerciseCategory: exercise.category,
-                weight: weight,
-                reps: reps,
-                setNumber: i
-            )
-            set.session = session
-            modelContext.insert(set)
-        }
+        let weightStr = weight.truncatingRemainder(dividingBy: 1) == 0
+            ? String(Int(weight))
+            : String(weight)
+        entries.append(ExerciseEntry(
+            name: exercise.name,
+            category: exercise.category,
+            pendingWeight: weightStr,
+            pendingReps: String(reps)
+        ))
     }
 
     /// Validates the pending inputs for `name`, creates a `WorkoutSet`, and
@@ -181,17 +153,19 @@ struct ActiveWorkoutView: View {
               let weight = Double(entry.pendingWeight),
               let reps = Int(entry.pendingReps), reps > 0 else { return }
 
+        let existingCount = session.sets.filter { $0.exerciseName == name }.count
         let set = WorkoutSet(
             exerciseName: name,
             exerciseCategory: entry.category,
             weight: weight,
             reps: reps,
-            setNumber: setsFor(name).count + 1
+            setNumber: existingCount + 1
         )
         set.session = session
         modelContext.insert(set)
 
-        // Clear inputs so the user is ready to log the next set
+        // Clear inputs after logging so the row doesn't auto-prepare
+        // the next set — the user fills in values when they're ready.
         if let idx = entries.firstIndex(where: { $0.name == name }) {
             entries[idx].pendingWeight = ""
             entries[idx].pendingReps = ""
@@ -216,12 +190,53 @@ struct ActiveWorkoutView: View {
         onDismiss()
     }
 
-    /// Formats a `TimeInterval` as `M:SS` (under an hour) or `H:MM:SS`.
-    private func formatTime(_ t: TimeInterval) -> String {
-        let s = Int(t)
+}
+
+/// Self-contained elapsed-time display for the workout toolbar.
+///
+/// Owning `elapsed` here (rather than in `ActiveWorkoutView`) means the
+/// per-second state change only re-renders this tiny view. `ActiveWorkoutView`
+/// stays completely still, so its `.sheet` modifier is never re-evaluated and
+/// the exercise-picker sheet hierarchy remains stable.
+struct ElapsedTimerView: View {
+    @State private var elapsed: TimeInterval = 0
+
+    var body: some View {
+        Text(formatted)
+            .font(.subheadline.monospacedDigit())
+            .foregroundStyle(.secondary)
+            .task {
+                while !Task.isCancelled {
+                    do {
+                        try await Task.sleep(for: .seconds(1))
+                        elapsed += 1
+                    } catch {
+                        break
+                    }
+                }
+            }
+    }
+
+    private var formatted: String {
+        let s = Int(elapsed)
         return s >= 3600
             ? String(format: "%d:%02d:%02d", s / 3600, (s % 3600) / 60, s % 60)
             : String(format: "%d:%02d", s / 60, s % 60)
+    }
+}
+
+/// Finish button for the workout toolbar.
+///
+/// Scoped to its own view so that reading `session.sets.isEmpty` only
+/// re-renders this button, not `ActiveWorkoutView`.
+struct FinishButtonView: View {
+    let session: WorkoutSession
+    let action: () -> Void
+
+    var body: some View {
+        Button("Finish", action: action)
+            .fontWeight(.semibold)
+            .disabled(session.sets.isEmpty)
     }
 }
 
@@ -238,16 +253,21 @@ struct ExerciseBlockView: View {
     /// changes update the parent's state directly.
     @Binding var entry: ExerciseEntry
 
-    /// Sets already saved for this exercise in the current session, sorted
-    /// by set number. Passed in from `ActiveWorkoutView` so this view stays
-    /// a pure rendering component.
-    let completedSets: [WorkoutSet]
+    /// The workout session. Sets are read here (not in ActiveWorkoutView)
+    /// so SwiftData changes only re-render this card, not the parent.
+    let session: WorkoutSession
 
     /// Called when the confirm button is tapped with valid inputs.
     let onAddSet: () -> Void
 
     /// Called with the set to remove when the minus button is tapped.
     let onDeleteSet: (WorkoutSet) -> Void
+
+    private var completedSets: [WorkoutSet] {
+        session.sets
+            .filter { $0.exerciseName == entry.name }
+            .sorted { $0.setNumber < $1.setNumber }
+    }
 
     /// `true` only when both the weight and reps fields contain valid, positive values.
     private var canAdd: Bool {

@@ -12,10 +12,6 @@ import SwiftData
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
 
-    /// Used only to detect whether the exercise library needs seeding.
-    /// An empty result on first launch triggers `seedExercises()`.
-    @Query private var exercises: [Exercise]
-
     /// The currently active workout session, if any. Presenting a non-nil
     /// value triggers the full-screen cover for `ActiveWorkoutView`.
     /// Set back to `nil` when the user finishes or discards the workout.
@@ -37,8 +33,12 @@ struct ContentView: View {
             ActiveWorkoutView(session: session, onDismiss: { activeSession = nil })
         }
         // Seed the exercise library once on first launch.
+        // Uses a one-off fetch count rather than @Query so inserting seed data
+        // doesn't cause ContentView to re-render (which would reset
+        // ActiveWorkoutView's @State and collapse any open sheets).
         .task {
-            if exercises.isEmpty { seedExercises() }
+            let count = (try? modelContext.fetchCount(FetchDescriptor<Exercise>())) ?? 0
+            if count == 0 { seedExercises() }
         }
     }
 

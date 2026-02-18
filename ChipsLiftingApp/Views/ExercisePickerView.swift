@@ -11,8 +11,8 @@ struct ExercisePickerView: View {
     /// so the user can't add the same exercise twice.
     let existingNames: Set<String>
 
-    /// Called with the chosen exercise and its configuration when confirmed.
-    let onSelect: (Exercise, _ sets: Int, _ weight: Double, _ reps: Int) -> Void
+    /// Called with the chosen exercise and its default weight/reps when confirmed.
+    let onSelect: (Exercise, _ weight: Double, _ reps: Int) -> Void
 
     /// Dismisses the picker sheet (the outer sheet owned by ActiveWorkoutView).
     /// Captured here so it can be called from within the setup sheet closure.
@@ -77,26 +77,25 @@ struct ExercisePickerView: View {
         // updates (e.g. the elapsed timer). Dismissing the picker sheet
         // also dismisses this child sheet automatically.
         .sheet(item: $selectedExercise) { exercise in
-            ExerciseSetupView(exercise: exercise) { sets, weight, reps in
-                onSelect(exercise, sets, weight, reps)
+            ExerciseSetupView(exercise: exercise) { weight, reps in
+                onSelect(exercise, weight, reps)
                 dismiss() // closes picker + this child sheet together
             }
         }
     }
 }
 
-/// Configures the sets, weight, and reps for an exercise before adding it.
+/// Configures the default weight and reps for an exercise before adding it.
 ///
-/// Presented as a child sheet from `ExercisePickerView`. The "Add" button
-/// is disabled until both weight and reps contain valid positive numbers.
+/// Presented as a child sheet from `ExercisePickerView`. These values
+/// pre-fill the input row so the user doesn't have to retype them for
+/// every set. The "Add" button is disabled until both fields are valid.
 struct ExerciseSetupView: View {
     let exercise: Exercise
 
-    /// Called with confirmed (sets, weight, reps) when the user taps "Add".
-    let onConfirm: (_ sets: Int, _ weight: Double, _ reps: Int) -> Void
+    /// Called with the default (weight, reps) when the user taps "Add".
+    let onConfirm: (_ weight: Double, _ reps: Int) -> Void
 
-    /// Defaults to 3 sets — a common starting point for most exercises.
-    @State private var sets = 3
     @State private var weight = ""
     @State private var reps = ""
 
@@ -107,12 +106,6 @@ struct ExerciseSetupView: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section {
-                    Stepper("\(sets) \(sets == 1 ? "set" : "sets")", value: $sets, in: 1...20)
-                } header: {
-                    Text("Sets")
-                }
-
                 Section {
                     HStack {
                         Text("Weight")
@@ -135,7 +128,7 @@ struct ExerciseSetupView: View {
                             .foregroundStyle(.secondary)
                     }
                 } header: {
-                    Text("Weight & Reps")
+                    Text("Default Weight & Reps")
                 }
             }
             .navigationTitle(exercise.name)
@@ -144,7 +137,7 @@ struct ExerciseSetupView: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Add") {
                         guard let w = Double(weight), let r = Int(reps), r > 0 else { return }
-                        onConfirm(sets, w, r)
+                        onConfirm(w, r)
                     }
                     .fontWeight(.semibold)
                     .disabled(!canConfirm)
