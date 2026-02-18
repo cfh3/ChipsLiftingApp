@@ -1,27 +1,52 @@
 import SwiftUI
 import SwiftData
 
+/// Root view of the app. Owns the two-tab navigation and manages the
+/// lifecycle of the currently active workout session.
+///
+/// Responsibilities:
+/// - Render the History and Exercises tabs.
+/// - Create a new `WorkoutSession` and present `ActiveWorkoutView` as a
+///   full-screen cover when the user starts a workout.
+/// - Seed the exercise library on first launch.
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
+
+    /// Used only to detect whether the exercise library needs seeding.
+    /// An empty result on first launch triggers `seedExercises()`.
     @Query private var exercises: [Exercise]
+
+    /// The currently active workout session, if any. Presenting a non-nil
+    /// value triggers the full-screen cover for `ActiveWorkoutView`.
+    /// Set back to `nil` when the user finishes or discards the workout.
     @State private var activeSession: WorkoutSession?
 
     var body: some View {
         TabView {
+            // Tab 1: chronological workout history with a start button
             HistoryView(onStartWorkout: startWorkout)
                 .tabItem { Label("History", systemImage: "clock.fill") }
 
+            // Tab 2: browseable exercise library with add/delete support
             ExercisesView()
                 .tabItem { Label("Exercises", systemImage: "dumbbell.fill") }
         }
+        // Present the active workout as a full-screen cover so it sits above
+        // the tab bar. Dismissed by setting activeSession back to nil.
         .fullScreenCover(item: $activeSession) { session in
             ActiveWorkoutView(session: session, onDismiss: { activeSession = nil })
         }
+        // Seed the exercise library once on first launch.
         .task {
             if exercises.isEmpty { seedExercises() }
         }
     }
 
+    /// Creates a new `WorkoutSession`, inserts it into the model context,
+    /// and presents `ActiveWorkoutView` by assigning it to `activeSession`.
+    ///
+    /// The session name is chosen based on the current hour so the default
+    /// label reflects when the workout took place.
     private func startWorkout() {
         let hour = Calendar.current.component(.hour, from: .now)
         let name: String
@@ -36,6 +61,8 @@ struct ContentView: View {
         activeSession = session
     }
 
+    /// Inserts all entries from `Exercise.seedData` into the model context.
+    /// Called once when the app is launched and the exercise library is empty.
     private func seedExercises() {
         for (name, category) in Exercise.seedData {
             modelContext.insert(Exercise(name: name, category: category))
