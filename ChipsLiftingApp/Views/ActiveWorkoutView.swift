@@ -115,8 +115,8 @@ struct ActiveWorkoutView: View {
         }
         .sheet(isPresented: $showingPicker) {
             // Pass existing exercise names so the picker hides already-added exercises
-            ExercisePickerView(existingNames: Set(entries.map(\.name))) { exercise in
-                addExercise(exercise)
+            ExercisePickerView(existingNames: Set(entries.map(\.name))) { exercise, sets, weight, reps in
+                addExercise(exercise, sets: sets, weight: weight, reps: reps)
             }
         }
         .alert("Discard Workout?", isPresented: $showingDiscardAlert) {
@@ -149,11 +149,26 @@ struct ActiveWorkoutView: View {
 
     // MARK: - Actions
 
-    /// Appends an `ExerciseEntry` for the selected exercise if it isn't
-    /// already present in the workout (guard prevents duplicates).
-    private func addExercise(_ exercise: Exercise) {
+    /// Adds an exercise to the workout and immediately logs `sets` identical sets
+    /// with the given `weight` and `reps`. The guard prevents duplicates.
+    ///
+    /// An `ExerciseEntry` is still appended so the block appears on screen and
+    /// the user can log additional sets manually afterward.
+    private func addExercise(_ exercise: Exercise, sets: Int, weight: Double, reps: Int) {
         guard !entries.contains(where: { $0.name == exercise.name }) else { return }
         entries.append(ExerciseEntry(name: exercise.name, category: exercise.category))
+
+        for i in 1...sets {
+            let set = WorkoutSet(
+                exerciseName: exercise.name,
+                exerciseCategory: exercise.category,
+                weight: weight,
+                reps: reps,
+                setNumber: i
+            )
+            set.session = session
+            modelContext.insert(set)
+        }
     }
 
     /// Validates the pending inputs for `name`, creates a `WorkoutSet`, and
