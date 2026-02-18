@@ -22,9 +22,6 @@ struct ExercisePickerView: View {
     @Query(sort: \Exercise.name) private var exercises: [Exercise]
     @State private var searchText = ""
 
-    /// Set when the user taps an exercise; drives navigation to `ExerciseSetupView`.
-    @State private var selectedExercise: Exercise?
-
     private var filtered: [Exercise] {
         exercises.filter { exercise in
             !existingNames.contains(exercise.name) &&
@@ -46,19 +43,17 @@ struct ExercisePickerView: View {
                 ForEach(grouped, id: \.0) { category, exercises in
                     Section(category.rawValue) {
                         ForEach(exercises) { exercise in
-                            // Tapping pushes ExerciseSetupView rather than
-                            // immediately confirming the selection.
-                            Button {
-                                selectedExercise = exercise
-                            } label: {
-                                HStack {
-                                    Text(exercise.name)
-                                        .foregroundStyle(.primary)
-                                    Spacer()
-                                    Image(systemName: "chevron.right")
-                                        .font(.caption)
-                                        .foregroundStyle(.tertiary)
+                            // NavigationLink manages its own push state internally,
+                            // avoiding the re-render/reset issues of navigationDestination(item:).
+                            // `dismiss` is captured from this scope so calling it inside
+                            // onConfirm closes the entire picker sheet.
+                            NavigationLink {
+                                ExerciseSetupView(exercise: exercise) { sets, weight, reps in
+                                    onSelect(exercise, sets, weight, reps)
+                                    dismiss()
                                 }
+                            } label: {
+                                Text(exercise.name)
                             }
                         }
                     }
@@ -70,15 +65,6 @@ struct ExercisePickerView: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
-                }
-            }
-            // Push ExerciseSetupView when an exercise is selected.
-            // `dismiss` here refers to the picker sheet, so calling it from
-            // within onConfirm closes the entire sheet in one step.
-            .navigationDestination(item: $selectedExercise) { exercise in
-                ExerciseSetupView(exercise: exercise) { sets, weight, reps in
-                    onSelect(exercise, sets, weight, reps)
-                    dismiss()
                 }
             }
         }
