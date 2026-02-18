@@ -14,35 +14,44 @@
 			remoteGlobalIDString = 45F2E94E2F463EC800E215AC;
 			remoteInfo = ChipsLiftingApp;
 		};
-		45F2E96C2F463EC900E215AC /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 45F2E9472F463EC800E215AC /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 45F2E94E2F463EC800E215AC;
-			remoteInfo = ChipsLiftingApp;
-		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
 		45F2E94F2F463EC800E215AC /* ChipsLiftingApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ChipsLiftingApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		45F2E9612F463EC900E215AC /* ChipsLiftingAppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ChipsLiftingAppTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		45F2E96B2F463EC900E215AC /* ChipsLiftingAppUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ChipsLiftingAppUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		45F2E9A82F463EFD00E215AC /* Exceptions for "ChipsLiftingApp" folder in "ChipsLiftingAppTests" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				LiftingApp.swift,
+				Models/Exercise.swift,
+				Models/WorkoutSession.swift,
+				Models/WorkoutSet.swift,
+				Views/ActiveWorkoutView.swift,
+				Views/ContentView.swift,
+				Views/ExercisePickerView.swift,
+				Views/ExercisesView.swift,
+				Views/HistoryView.swift,
+				Views/WorkoutDetailView.swift,
+			);
+			target = 45F2E9602F463EC900E215AC /* ChipsLiftingAppTests */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		45F2E9512F463EC800E215AC /* ChipsLiftingApp */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				45F2E9A82F463EFD00E215AC /* Exceptions for "ChipsLiftingApp" folder in "ChipsLiftingAppTests" target */,
+			);
 			path = ChipsLiftingApp;
 			sourceTree = "<group>";
 		};
 		45F2E9642F463EC900E215AC /* ChipsLiftingAppTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = ChipsLiftingAppTests;
-			sourceTree = "<group>";
-		};
-		45F2E96E2F463EC900E215AC /* ChipsLiftingAppUITests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = ChipsLiftingAppUITests;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -62,13 +71,6 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		45F2E9682F463EC900E215AC /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -77,7 +79,6 @@
 			children = (
 				45F2E9512F463EC800E215AC /* ChipsLiftingApp */,
 				45F2E9642F463EC900E215AC /* ChipsLiftingAppTests */,
-				45F2E96E2F463EC900E215AC /* ChipsLiftingAppUITests */,
 				45F2E9502F463EC800E215AC /* Products */,
 			);
 			sourceTree = "<group>";
@@ -87,7 +88,6 @@
 			children = (
 				45F2E94F2F463EC800E215AC /* ChipsLiftingApp.app */,
 				45F2E9612F463EC900E215AC /* ChipsLiftingAppTests.xctest */,
-				45F2E96B2F463EC900E215AC /* ChipsLiftingAppUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -140,29 +140,6 @@
 			productReference = 45F2E9612F463EC900E215AC /* ChipsLiftingAppTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
-		45F2E96A2F463EC900E215AC /* ChipsLiftingAppUITests */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 45F2E97B2F463EC900E215AC /* Build configuration list for PBXNativeTarget "ChipsLiftingAppUITests" */;
-			buildPhases = (
-				45F2E9672F463EC900E215AC /* Sources */,
-				45F2E9682F463EC900E215AC /* Frameworks */,
-				45F2E9692F463EC900E215AC /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-				45F2E96D2F463EC900E215AC /* PBXTargetDependency */,
-			);
-			fileSystemSynchronizedGroups = (
-				45F2E96E2F463EC900E215AC /* ChipsLiftingAppUITests */,
-			);
-			name = ChipsLiftingAppUITests;
-			packageProductDependencies = (
-			);
-			productName = ChipsLiftingAppUITests;
-			productReference = 45F2E96B2F463EC900E215AC /* ChipsLiftingAppUITests.xctest */;
-			productType = "com.apple.product-type.bundle.ui-testing";
-		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -177,10 +154,6 @@
 						CreatedOnToolsVersion = 26.2;
 					};
 					45F2E9602F463EC900E215AC = {
-						CreatedOnToolsVersion = 26.2;
-						TestTargetID = 45F2E94E2F463EC800E215AC;
-					};
-					45F2E96A2F463EC900E215AC = {
 						CreatedOnToolsVersion = 26.2;
 						TestTargetID = 45F2E94E2F463EC800E215AC;
 					};
@@ -202,7 +175,6 @@
 			targets = (
 				45F2E94E2F463EC800E215AC /* ChipsLiftingApp */,
 				45F2E9602F463EC900E215AC /* ChipsLiftingAppTests */,
-				45F2E96A2F463EC900E215AC /* ChipsLiftingAppUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -216,13 +188,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		45F2E95F2F463EC900E215AC /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		45F2E9692F463EC900E215AC /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -246,13 +211,6 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		45F2E9672F463EC900E215AC /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -260,11 +218,6 @@
 			isa = PBXTargetDependency;
 			target = 45F2E94E2F463EC800E215AC /* ChipsLiftingApp */;
 			targetProxy = 45F2E9622F463EC900E215AC /* PBXContainerItemProxy */;
-		};
-		45F2E96D2F463EC900E215AC /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 45F2E94E2F463EC800E215AC /* ChipsLiftingApp */;
-			targetProxy = 45F2E96C2F463EC900E215AC /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -492,44 +445,6 @@
 			};
 			name = Release;
 		};
-		45F2E97C2F463EC900E215AC /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				GENERATE_INFOPLIST_FILE = YES;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = ChipsOrgID.ChipsLiftingAppUITests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				STRING_CATALOG_GENERATE_SYMBOLS = NO;
-				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_TARGET_NAME = ChipsLiftingApp;
-			};
-			name = Debug;
-		};
-		45F2E97D2F463EC900E215AC /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				GENERATE_INFOPLIST_FILE = YES;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = ChipsOrgID.ChipsLiftingAppUITests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				STRING_CATALOG_GENERATE_SYMBOLS = NO;
-				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_TARGET_NAME = ChipsLiftingApp;
-			};
-			name = Release;
-		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -556,15 +471,6 @@
 			buildConfigurations = (
 				45F2E9792F463EC900E215AC /* Debug */,
 				45F2E97A2F463EC900E215AC /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		45F2E97B2F463EC900E215AC /* Build configuration list for PBXNativeTarget "ChipsLiftingAppUITests" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				45F2E97C2F463EC900E215AC /* Debug */,
-				45F2E97D2F463EC900E215AC /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
