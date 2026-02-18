@@ -164,12 +164,8 @@ struct ActiveWorkoutView: View {
         set.session = session
         modelContext.insert(set)
 
-        // Clear inputs after logging so the row doesn't auto-prepare
-        // the next set — the user fills in values when they're ready.
-        if let idx = entries.firstIndex(where: { $0.name == name }) {
-            entries[idx].pendingWeight = ""
-            entries[idx].pendingReps = ""
-        }
+        // Leave weight and reps populated so the next set is ready to log
+        // with one tap — the user can adjust the values if needed.
     }
 
     /// Removes a logged set from the model context.
