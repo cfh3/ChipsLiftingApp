@@ -58,6 +58,7 @@ struct ExercisePickerView: View {
                                         .foregroundStyle(.tertiary)
                                 }
                             }
+                            .accessibilityIdentifier(A11y.pickerExercise(exercise.name))
                         }
                     }
                 }
@@ -114,6 +115,7 @@ struct ExerciseSetupView: View {
                             .keyboardType(.decimalPad)
                             .multilineTextAlignment(.trailing)
                             .frame(width: 80)
+                            .accessibilityIdentifier(A11y.setupWeight)
                         Text("lbs")
                             .foregroundStyle(.secondary)
                     }
@@ -124,6 +126,7 @@ struct ExerciseSetupView: View {
                             .keyboardType(.numberPad)
                             .multilineTextAlignment(.trailing)
                             .frame(width: 80)
+                            .accessibilityIdentifier(A11y.setupReps)
                         Text("per set")
                             .foregroundStyle(.secondary)
                     }

@@ -305,6 +305,7 @@ struct ExerciseBlockView: View {
                         Text("\(set.displayWeight) lbs")
                             .frame(maxWidth: .infinity, alignment: .center)
                             .fontWeight(.medium)
+                            .accessibilityIdentifier(A11y.loggedSet(entry.name, set.setNumber))
                         Text("\(set.reps)")
                             .frame(width: 60, alignment: .center)
                         Button {
@@ -334,6 +335,7 @@ struct ExerciseBlockView: View {
 
                 // Weight input — decimal pad for values like 135.5
                 TextField("0", text: $entry.pendingWeight)
+                    .accessibilityIdentifier(A11y.entryWeight(entry.name))
                     .keyboardType(.decimalPad)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 8)
@@ -349,6 +351,7 @@ struct ExerciseBlockView: View {
 
                 // Reps input — number pad for whole numbers only
                 TextField("0", text: $entry.pendingReps)
+                    .accessibilityIdentifier(A11y.entryReps(entry.name))
                     .keyboardType(.numberPad)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 8)
@@ -370,6 +373,7 @@ struct ExerciseBlockView: View {
                         .foregroundStyle(canAdd ? .green : Color(.systemGray4))
                 }
                 .disabled(!canAdd)
+                .accessibilityIdentifier(A11y.logSet(entry.name))
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 12)
