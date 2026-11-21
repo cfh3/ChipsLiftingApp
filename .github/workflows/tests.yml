@@ -24,7 +24,9 @@ jobs:
       # On failure, the result bundle (with UI test screenshots) is uploaded below.
       - name: Run tests
         env:
-          ONLY_TESTING: ${{ github.event_name == 'pull_request' && '' || '-only-testing:ChipsLiftingAppTests' }}
+          # Non-PR runs get the flag; PRs get an empty value. (Keep the non-empty
+          # value on the && side: `cond && '' || x` always yields x.)
+          ONLY_TESTING: ${{ github.event_name != 'pull_request' && '-only-testing:ChipsLiftingAppTests' || '' }}
         run: |
           xcodebuild test \
             -project ChipsLiftingApp.xcodeproj \
