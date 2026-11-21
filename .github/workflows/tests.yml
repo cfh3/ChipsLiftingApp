@@ -19,13 +19,15 @@ jobs:
       - name: Select Xcode
         run: sudo xcode-select -s /Applications/Xcode_27.2.app
 
-      - name: Run unit tests
+      # Runs every test target in the shared scheme: unit tests
+      # (ChipsLiftingAppTests) and UI tests (ChipsLiftingAppUITests).
+      # On failure, the result bundle (with UI test screenshots) is uploaded below.
+      - name: Run unit and UI tests
         run: |
           xcodebuild test \
             -project ChipsLiftingApp.xcodeproj \
             -scheme ChipsLiftingApp \
             -destination "platform=iOS Simulator,name=iPhone 17,OS=27.2" \
-            -only-testing:ChipsLiftingAppTests \
             -resultBundlePath TestResults.xcresult
 
       - name: Upload test results
