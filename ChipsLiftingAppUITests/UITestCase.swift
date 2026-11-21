@@ -5,13 +5,17 @@ import XCTest
 /// Launches the app with `-ui-testing`, which makes `LiftingApp` use an
 /// in-memory store. Every test starts from an empty history and a freshly
 /// seeded exercise library, and never touches data on the simulator.
+///
+/// XCUITest APIs are main-actor isolated, so the class runs on the main actor.
+/// setUp/tearDown use the async overloads, which XCTest lets subclasses isolate.
+@MainActor
 class UITestCase: XCTestCase {
     var app: XCUIApplication!
 
     /// Entry point for screen-object chains; the app always opens on History.
     var history: HistoryScreen { HistoryScreen(app: app) }
 
-    override func setUpWithError() throws {
+    override func setUp() async throws {
         continueAfterFailure = false
         app = XCUIApplication()
         // Pin language and locale so formatted numbers ("1,350 lbs") are predictable.
@@ -19,7 +23,7 @@ class UITestCase: XCTestCase {
         app.launch()
     }
 
-    override func tearDownWithError() throws {
+    override func tearDown() async throws {
         // Keep a picture of the final screen when a test fails.
         if let run = testRun, run.failureCount > 0 {
             let shot = XCTAttachment(screenshot: app.screenshot())
@@ -31,7 +35,9 @@ class UITestCase: XCTestCase {
     }
 }
 
-/// Shared helpers for screen objects.
+/// Shared helpers for screen objects. Main-actor isolated like the XCUITest
+/// APIs it wraps; conforming structs inherit that isolation.
+@MainActor
 protocol Screen {
     var app: XCUIApplication { get }
 }
