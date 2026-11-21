@@ -21,7 +21,7 @@ jobs:
           xcodebuild test \
             -project ChipsLiftingApp.xcodeproj \
             -scheme ChipsLiftingApp \
-            -destination "platform=iOS Simulator,name=iPhone 16" \
+            -destination "platform=iOS Simulator,name=iPhone 17" \
             -resultBundlePath TestResults.xcresult
 
       - name: Upload test results
