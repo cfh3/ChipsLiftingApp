@@ -19,15 +19,18 @@ jobs:
       - name: Select Xcode
         run: sudo xcode-select -s /Applications/Xcode_27.2.app
 
-      # Runs every test target in the shared scheme: unit tests
-      # (ChipsLiftingAppTests) and UI tests (ChipsLiftingAppUITests).
+      # Pushes run unit tests only (fast). Pull requests also run the UI
+      # tests (ChipsLiftingAppUITests), which add several minutes.
       # On failure, the result bundle (with UI test screenshots) is uploaded below.
-      - name: Run unit and UI tests
+      - name: Run tests
+        env:
+          ONLY_TESTING: ${{ github.event_name == 'pull_request' && '' || '-only-testing:ChipsLiftingAppTests' }}
         run: |
           xcodebuild test \
             -project ChipsLiftingApp.xcodeproj \
             -scheme ChipsLiftingApp \
             -destination "platform=iOS Simulator,name=iPhone 17,OS=27.2" \
+            $ONLY_TESTING \
             -resultBundlePath TestResults.xcresult
 
       - name: Upload test results
